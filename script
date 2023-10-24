@@ -1,0 +1,52 @@
+import requests
+import telebot
+
+
+token = ' ' # serp token
+api_url = f'https://api.serpstat.com/v4/?token={token}'
+
+bot = telebot.TeleBot(' ')
+
+#здарова
+@bot.message_handler(commands=['start'])
+def start_message(message):
+    bot.send_message(message.chat.id, 'Вечер в хату,\nдавай url')
+
+
+@bot.message_handler(content_types=["text"])
+def handle_text(message):
+    input = message.text
+    api_resp = serp_api(input)
+
+    msg_result = ('\n'.join(api_resp))
+    bot.send_message(message.chat.id, msg_result)
+
+
+def serp_api(url):
+    data = {
+        "id": "1",
+        "method": "SerpstatUrlProcedure.getUrlKeywords",
+        "params": {
+            "se": "g_ua", # гео
+            "url": url,
+            "size": 25 # количество говна
+        }
+    }
+
+    response = requests.post(api_url, json=data)
+    response_data = response.json()
+
+    # кейворды, сюда
+    keywords = []
+    for item in response_data["result"]["data"]:
+        keyword = item["keyword"]
+        keywords.append(keyword)
+
+    # чекаво
+    if response.status_code == 200:
+        return(keywords)
+    else:
+        return("сукаблять", response.status_code, "\nтакая хуйня:", response.text)
+
+# булинг
+bot.polling(none_stop=True, interval=0)
